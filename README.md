@@ -27,3 +27,18 @@ python scripts/check_connection.py
 ```bash
 pytest
 ```
+
+## Docker
+
+```bash
+cp .env.example .env   # 값 채우기
+docker compose build
+docker compose run --rm bot   # 연동 테스트 실행
+```
+
+토큰은 클라이언트당 1개만 유효하므로(재발급 시 이전 토큰 무효화) 같은 키로 컨테이너를 여러 개 띄우지 마세요.
+
+## CI
+
+GitHub Actions(`.github/workflows/ci.yml`)가 PR/`main` push 마다 `ruff check`, `ruff format --check`, `pytest`, `docker build` 를 실행합니다.
+토스 API 는 허용 IP 에서만 호출되므로 Actions 에서는 실제 API 를 호출하지 않습니다.
