@@ -1,0 +1,9 @@
+services:
+  bot:
+    build: .
+    image: toss-autotrade:latest
+    env_file: .env
+    environment:
+      TZ: Asia/Seoul
+    # A single instance only: issuing a new token revokes the previous one.
+    restart: "no"

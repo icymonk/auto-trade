@@ -1,4 +1,5 @@
 """Read-only connectivity check against the Toss Securities Open API. Never places orders."""
+
 import json
 import sys
 from pathlib import Path

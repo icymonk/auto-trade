@@ -87,6 +87,8 @@ def test_token_error(client):
 def test_retries_on_429(client, monkeypatch):
     monkeypatch.setattr("toss_autotrade.client.time.sleep", lambda s: None)
     _token(responses)
-    responses.add(responses.GET, f"{BASE_URL}/api/v1/accounts", status=429, headers={"Retry-After": "1"}, json={})
+    responses.add(
+        responses.GET, f"{BASE_URL}/api/v1/accounts", status=429, headers={"Retry-After": "1"}, json={}
+    )
     responses.add(responses.GET, f"{BASE_URL}/api/v1/accounts", json={"result": [{"accountSeq": 1}]})
     assert client.get_accounts() == [{"accountSeq": 1}]
