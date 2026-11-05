@@ -11,6 +11,7 @@ import {
   MeritzFeed,
   MeritzMarketClock,
   MeritzStreamFeed,
+  MinuteBarRecorder,
   RiskManager,
   SimulatedFeed,
   settingsFromEnv,
@@ -33,8 +34,10 @@ if (!settings.dryRun) {
   process.exit(2)
 }
 
+const ledger = new Ledger(settings.dbPath)
 let feed, clock
 let stream: MeritzStreamFeed | undefined
+let recorder: MinuteBarRecorder | undefined
 if (args.simulate) {
   feed = new SimulatedFeed()
   clock = new AlwaysOpen()
@@ -42,7 +45,8 @@ if (args.simulate) {
 else if (settings.broker === 'meritz') {
   const client = new MeritzClient()
   if (settings.meritzFeed === 'ws') {
-    stream = new MeritzStreamFeed(client)
+    if (settings.recordMinuteBars) recorder = new MinuteBarRecorder(bars => ledger.saveMinuteBars(bars))
+    stream = new MeritzStreamFeed(client, { onTrade: recorder && (t => recorder!.onTrade(t)) })
     stream.start(settings.symbols)
     feed = stream
   }
@@ -57,7 +61,6 @@ else {
   clock = args['ignore-market-hours'] ? new AlwaysOpen() : new MarketClock(client)
 }
 
-const ledger = new Ledger(settings.dbPath)
 const bot = new Bot({
   feed,
   clock,
@@ -80,4 +83,5 @@ await bot.run(
   args.steps !== undefined ? Number(args.steps) : undefined,
 )
 stream?.close()
+recorder?.flush()
 ledger.close()

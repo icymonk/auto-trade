@@ -13,6 +13,7 @@
     "dev:web": "pnpm --filter web dev",
     "bot": "tsx --env-file-if-exists=.env --disable-warning=ExperimentalWarning apps/bot/src/main.ts",
     "bot:simulate": "pnpm bot --simulate",
+    "backtest": "tsx --env-file-if-exists=.env --disable-warning=ExperimentalWarning apps/bot/src/backtest.ts",
     "check:connection": "tsx --env-file-if-exists=.env --disable-warning=ExperimentalWarning apps/bot/src/check-connection.ts"
   },
   "devDependencies": {

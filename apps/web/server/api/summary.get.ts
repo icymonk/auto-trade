@@ -26,5 +26,6 @@ export default defineHandler(() => {
     buysToday: ledger.buysOn(today),
     positions,
     quotes: [...quotes.values()],
+    minuteBars: ledger.minuteBarStats(),
   }
 })

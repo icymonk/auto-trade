@@ -2,7 +2,9 @@ import { Decimal } from 'decimal.js'
 import type { PriceFeed } from './feed.ts'
 import type { MeritzClient } from './meritz.ts'
 import { MeritzFeed, parseMeritzSymbol } from './meritz.ts'
+import type { Trade } from './minute-bars.ts'
 import type { Quote } from './models.ts'
+import { kstDate } from './models.ts'
 
 const SERVER_NOT_READY = 'WSC00113'
 
@@ -32,6 +34,16 @@ export interface MeritzStreamOptions {
   now?: () => number
   log?: (msg: string) => void
   reconnectDelayMs?: (attempt: number) => number
+  /** Called for every streamed trade (e.g. to record minute bars). */
+  onTrade?: (trade: Trade) => void
+}
+
+/** Trade time: US ticks carry korea_date/korea_hour, KR ticks only bsop_hour (KST, today). */
+export function tradeTime(body: any, now: number): Date {
+  const iso = (d: string, h: string) => new Date(`${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}T${h.slice(0, 2)}:${h.slice(2, 4)}:${h.slice(4, 6)}+09:00`)
+  if (/^\d{8}$/.test(body.korea_date ?? '') && /^\d{6}$/.test(body.korea_hour ?? '')) return iso(body.korea_date, body.korea_hour)
+  if (/^\d{6}$/.test(body.bsop_hour ?? '')) return iso(kstDate(new Date(now)).replace(/-/g, ''), body.bsop_hour)
+  return new Date(now)
 }
 
 /**
@@ -47,6 +59,7 @@ export class MeritzStreamFeed implements PriceFeed {
   private readonly now: () => number
   private readonly log: (msg: string) => void
   private readonly reconnectDelayMs: (attempt: number) => number
+  private readonly onTrade?: (trade: Trade) => void
   private readonly latest = new Map<string, { price: Decimal, at: number }>()
   private readonly symbolByKey = new Map<string, string>()
   private ws?: WebSocketLike
@@ -63,6 +76,7 @@ export class MeritzStreamFeed implements PriceFeed {
     this.now = opts.now ?? Date.now
     this.log = opts.log ?? (msg => console.log(`[meritz-ws] ${msg}`))
     this.reconnectDelayMs = opts.reconnectDelayMs ?? (n => Math.min(30_000, 1000 * 2 ** n))
+    this.onTrade = opts.onTrade
   }
 
   get connected() {
@@ -132,7 +146,13 @@ export class MeritzStreamFeed implements PriceFeed {
     // KR: hour_cls_code "0" is a real trade; other values are expected (indicative) prices.
     if (body.hour_cls_code !== undefined && body.hour_cls_code !== '0') return
     const price = new Decimal(body.prpr)
-    if (price.isFinite() && price.gt(0)) this.latest.set(symbol, { price, at: this.now() })
+    if (!price.isFinite() || price.lte(0)) return
+    const now = this.now()
+    this.latest.set(symbol, { price, at: now })
+    if (this.onTrade) {
+      const vol = new Decimal(body.cntg_vol ?? body.cnqn ?? 0)
+      this.onTrade({ symbol, price, volume: vol.isFinite() ? vol : new Decimal(0), at: tradeTime(body, now) })
+    }
   }
 
   private async subscribeAll() {

@@ -17,6 +17,7 @@ services:
     environment:
       NUXT_DB_PATH: /app/data/bot.sqlite3
       NUXT_KILL_SWITCH_PATH: /app/data/KILL
+      NUXT_BACKTEST_DB_PATH: /app/data/backtest.sqlite3
       NUXT_DASHBOARD_PASSWORD: ${DASHBOARD_PASSWORD:-}
       PORT: 3000
     volumes:
@@ -32,4 +33,15 @@ services:
     image: auto-trade:latest
     command: ["node_modules/.bin/tsx", "apps/bot/src/check-connection.ts"]
     env_file: .env
+    profiles: [tools]
+
+  # Backtest on daily candles: docker compose run --rm backtest --symbols 005930,AAPL.OQ --from 2020-01-01
+  backtest:
+    image: auto-trade:latest
+    entrypoint: ["node_modules/.bin/tsx", "apps/bot/src/backtest.ts"]
+    env_file: .env
+    environment:
+      BACKTEST_DB_PATH: /app/data/backtest.sqlite3
+    volumes:
+      - ./data:/app/data
     profiles: [tools]
