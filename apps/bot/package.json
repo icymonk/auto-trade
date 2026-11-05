@@ -1,0 +1,11 @@
+{
+  "name": "bot",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc -p ."
+  },
+  "dependencies": {
+    "@toss-autotrade/core": "workspace:*"
+  }
+}

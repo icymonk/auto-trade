@@ -1,17 +1,17 @@
-FROM python:3.12-slim
+FROM node:22-slim
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
-
+ENV TZ=Asia/Seoul
 WORKDIR /app
+RUN corepack enable
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY packages/core/package.json packages/core/
+COPY apps/bot/package.json apps/bot/
+COPY apps/web/package.json apps/web/
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
-COPY toss_autotrade ./toss_autotrade
-COPY scripts ./scripts
+COPY . .
+RUN pnpm --filter web build
 
-RUN useradd --create-home --uid 1000 app
-USER app
-
-CMD ["python", "scripts/check_connection.py"]
+ENV NODE_OPTIONS=--disable-warning=ExperimentalWarning
+CMD ["node_modules/.bin/tsx", "apps/bot/src/main.ts"]

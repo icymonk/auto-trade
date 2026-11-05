@@ -1,44 +1,75 @@
 # toss-autotrade
 
-[토스증권 Open API](https://developers.tossinvest.com) 기반 자동매매 프로젝트.
+[토스증권 Open API](https://developers.tossinvest.com) 기반 자동매매 프로젝트 (TypeScript, pnpm 모노레포).
+
+> 현재는 **dry-run 전용**입니다. 주문은 토스로 보내지 않고 로컬 SQLite 에 가상 체결로만 기록합니다.
+> `DRY_RUN=false` 로 실행하면 봇이 시작을 거부합니다.
+
+## 구성
+
+| 경로 | 역할 |
+| --- | --- |
+| `packages/core` | 토스 API 클라이언트, 전략, 리스크 관리, SQLite 기록(ledger), dry-run 브로커 |
+| `apps/bot` | 상시 실행 워커 (`main.ts`), 조회 전용 연동 테스트 (`check-connection.ts`) |
+| `apps/web` | Nuxt + shadcn-vue 대시보드: 포지션, 체결 내역, 손익, kill switch |
+
+봇과 대시보드는 별도 프로세스이고 `data/` 의 SQLite 파일과 kill switch 파일을 같이 봅니다. 대시보드를 재시작해도 매매는 끊기지 않습니다.
 
 ## 준비
 
 1. 토스증권 WTS > 설정 > Open API 에서 `client_id` / `client_secret` 발급
-2. 같은 화면의 **허용 IP 관리**에 API를 호출할 서버의 공인 IP 등록 (미등록 시 403)
-3. 설정
+2. 같은 화면의 **허용 IP 관리**에 봇을 돌릴 PC 의 공인 IP 등록 (미등록 시 403)
+3. 설정 (Node 22.13+, pnpm)
 
 ```bash
-python3 -m venv .venv && . .venv/bin/activate
-pip install -r requirements.txt -r requirements-dev.txt
+pnpm install
 cp .env.example .env   # 값 채우기
 ```
 
-## 연동 테스트 (조회 전용, 주문 없음)
+## 실행
 
 ```bash
-python scripts/check_connection.py
+pnpm check:connection          # 조회 전용 연동 테스트 (주문 없음)
+pnpm bot:simulate              # API 키 없이 가상 시세로 dry-run
+pnpm bot                       # 실제 시세로 dry-run (정규장 시간에만 동작)
+pnpm bot --ignore-market-hours # 장 시간과 무관하게 실제 시세로 dry-run
+pnpm dev:web                   # 대시보드 개발 서버 (http://localhost:3000)
 ```
 
-토큰 발급 → 종목 정보/현재가/환율/장 운영 정보 → 계좌 목록 → 보유 주식/매수 가능 금액 순으로 호출합니다.
+`--steps N`, `--poll-seconds S` 로 반복 횟수와 주기를 바꿀 수 있습니다.
 
-## 단위 테스트
+## 안전장치
 
-```bash
-pytest
-```
+| 설정 | 기본값 | 동작 |
+| --- | --- | --- |
+| `ORDER_BUDGET_KRW` | 100000 | 매수 1회 예산 (USD 종목은 실시간 환율로 환산) |
+| `MAX_ORDER_KRW` | 200000 | 이 금액을 넘는 매수 차단 |
+| `MAX_DAILY_LOSS_KRW` | 50000 | 오늘 실현+평가 손익이 이 이하로 떨어지면 매수 차단 (매도는 허용) |
+| `MAX_ORDERS_PER_DAY` | 10 | 하루 매수 횟수 제한 (매도는 허용) |
+| `KILL_SWITCH_PATH` | `data/KILL` | 파일이 있으면 모든 매매 중지. 대시보드 토글 또는 `touch data/KILL` |
 
-## Docker
+주문마다 고유 `clientOrderId` 를 만들고 같은 ID 의 중복 체결은 거부합니다.
+
+## 집 PC / 미니PC 에서 상시 운영 (Docker)
 
 ```bash
 cp .env.example .env   # 값 채우기
-docker compose build
-docker compose run --rm bot   # 연동 테스트 실행
+docker compose up -d --build     # bot + web
+docker compose logs -f bot
+docker compose run --rm check    # 조회 전용 연동 테스트
 ```
 
-토큰은 클라이언트당 1개만 유효하므로(재발급 시 이전 토큰 무효화) 같은 키로 컨테이너를 여러 개 띄우지 마세요.
+- 대시보드: http://localhost:3000 . 같은 공유기의 다른 기기에서 보려면 `.env` 에 `DASHBOARD_BIND=0.0.0.0` 과 `DASHBOARD_PASSWORD` 를 설정하세요 (Basic 인증, 사용자명은 아무거나).
+- 데이터는 `./data` 에 남습니다.
+- 토큰은 클라이언트당 1개만 유효하므로(재발급 시 이전 토큰 무효화) 같은 키로 봇을 여러 개 띄우지 마세요.
 
-## CI
+## 테스트
 
-GitHub Actions(`.github/workflows/ci.yml`)가 PR/`main` push 마다 `ruff check`, `ruff format --check`, `pytest`, `docker build` 를 실행합니다.
+```bash
+pnpm test        # Vitest
+pnpm typecheck
+pnpm build       # 대시보드 빌드
+```
+
+GitHub Actions(`.github/workflows/ci.yml`)가 PR/`main` push 마다 위 3개, 가상 시세 dry-run, `docker build` 를 실행합니다.
 토스 API 는 허용 IP 에서만 호출되므로 Actions 에서는 실제 API 를 호출하지 않습니다.

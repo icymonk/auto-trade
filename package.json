@@ -1,0 +1,24 @@
+{
+  "name": "toss-autotrade",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.34.9",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "pnpm -r typecheck",
+    "build": "pnpm --filter web build",
+    "dev:web": "pnpm --filter web dev",
+    "bot": "tsx --env-file-if-exists=.env --disable-warning=ExperimentalWarning apps/bot/src/main.ts",
+    "bot:simulate": "pnpm bot --simulate",
+    "check:connection": "tsx --env-file-if-exists=.env --disable-warning=ExperimentalWarning apps/bot/src/check-connection.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.0",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.3"
+  }
+}

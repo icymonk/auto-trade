@@ -1,9 +1,7 @@
 .git
 .github
-.venv
 .env
-__pycache__/
-*.pyc
-.pytest_cache/
-.ruff_cache/
-tests
+**/node_modules
+**/.nuxt
+**/.output
+data
