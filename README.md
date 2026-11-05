@@ -53,6 +53,21 @@ pnpm dev:web                   # 대시보드 개발 서버 (http://localhost:30
 
 `--steps N`, `--poll-seconds S` 로 반복 횟수와 주기를 바꿀 수 있습니다.
 
+## 백테스트 (과거 일봉)
+
+```bash
+pnpm backtest --symbols 005930,000660,AAPL.OQ --from 2020-01-01 --to 2025-12-31 --budget 10000000 --max-order 10000000
+```
+
+- 실제 봇과 같은 전략·리스크 한도·가상 체결 코드로 과거 종가를 하루씩 넘기며 돌립니다. 신호가 난 날 종가로 체결합니다.
+- 메리츠 일봉(수정주가)을 씁니다. 국내는 1995년, 미국은 2016년부터 있습니다. 받은 일봉은 `BACKTEST_DB_PATH`(기본 `data/backtest.sqlite3`)에 저장해 다시 받지 않습니다.
+- 옵션을 안 주면 `.env` 값(`STRATEGY`, `SMA_*`, `ORDER_BUDGET_KRW`, `MAX_*`, `FEE_RATE`, `KR_SELL_TAX_RATE`)을 씁니다. 미국 종목은 실행 시점 환율 하나로 계산합니다(`--fx` 로 지정 가능).
+- 결과는 대시보드 `/backtests` 에서 종목별 수익률, 그냥 보유했을 때 수익률, 최대 낙폭, 승률, 손익 추이, 거래 내역으로 봅니다.
+- Docker: `docker compose run --rm backtest --symbols 005930 --from 2020-01-01`
+- 주의: 지금 상장된 종목만 조회되므로 상장폐지 종목이 빠져 결과가 좋게 나올 수 있습니다(생존 편향). 슬리피지는 넣지 않았습니다.
+
+분봉은 메리츠 API에서 최근 40개만 받을 수 있어 과거 분봉 백테스트는 안 됩니다. 대신 봇이 WebSocket 체결로 1분봉을 만들어 `DB_PATH`의 `minute_bars` 테이블에 쌓습니다(`RECORD_MINUTE_BARS=true`, 기본값). 대시보드 첫 화면에서 저장 현황을 볼 수 있습니다.
+
 ## 안전장치
 
 | 설정 | 기본값 | 동작 |

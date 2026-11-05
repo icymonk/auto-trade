@@ -18,10 +18,11 @@ export default defineNuxtConfig({
     prefix: '',
     componentDir: '@/components/ui',
   },
-  // Read at runtime from NUXT_DB_PATH / NUXT_KILL_SWITCH_PATH; same files as the bot.
+  // Read at runtime from NUXT_DB_PATH / NUXT_KILL_SWITCH_PATH / NUXT_BACKTEST_DB_PATH; same files as the bot.
   runtimeConfig: {
     dbPath: '../../data/bot.sqlite3',
     killSwitchPath: '../../data/KILL',
+    backtestDbPath: '../../data/backtest.sqlite3',
     dashboardPassword: '',
   },
 })

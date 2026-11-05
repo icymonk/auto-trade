@@ -2,6 +2,7 @@ import { mkdirSync } from 'node:fs'
 import { dirname } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { Decimal } from 'decimal.js'
+import type { MinuteBar } from './minute-bars.ts'
 import type { Currency, Fill, Position, Side } from './models.ts'
 import { kstDate } from './models.ts'
 
@@ -32,6 +33,16 @@ CREATE TABLE IF NOT EXISTS quotes (
   price TEXT NOT NULL,
   currency TEXT NOT NULL,
   ts TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS minute_bars (
+  symbol TEXT NOT NULL,
+  minute TEXT NOT NULL,
+  open TEXT NOT NULL,
+  high TEXT NOT NULL,
+  low TEXT NOT NULL,
+  close TEXT NOT NULL,
+  volume TEXT NOT NULL,
+  PRIMARY KEY (symbol, minute)
 );
 CREATE TABLE IF NOT EXISTS bot_status (
   id INTEGER PRIMARY KEY CHECK (id = 1),
@@ -182,6 +193,31 @@ export class Ledger {
 
   quotes(): StoredQuote[] {
     return this.db.prepare('SELECT * FROM quotes ORDER BY symbol').all() as any[]
+  }
+
+  saveMinuteBars(bars: MinuteBar[]) {
+    const stmt = this.db.prepare('INSERT OR REPLACE INTO minute_bars VALUES (?, ?, ?, ?, ?, ?, ?)')
+    for (const b of bars) {
+      stmt.run(b.symbol, b.minute.toISOString(), b.open.toString(), b.high.toString(), b.low.toString(), b.close.toString(), b.volume.toString())
+    }
+  }
+
+  minuteBars(symbol: string, from = '', to = '9999'): MinuteBar[] {
+    const rows = this.db.prepare('SELECT * FROM minute_bars WHERE symbol = ? AND minute >= ? AND minute < ? ORDER BY minute').all(symbol, from, to) as any[]
+    return rows.map(r => ({
+      symbol: r.symbol,
+      minute: new Date(r.minute),
+      open: new Decimal(r.open),
+      high: new Decimal(r.high),
+      low: new Decimal(r.low),
+      close: new Decimal(r.close),
+      volume: new Decimal(r.volume),
+    }))
+  }
+
+  minuteBarStats(): { symbol: string, count: number, first: string, last: string }[] {
+    return (this.db.prepare('SELECT symbol, COUNT(*) AS count, MIN(minute) AS first, MAX(minute) AS last FROM minute_bars GROUP BY symbol ORDER BY symbol').all() as any[])
+      .map(r => ({ symbol: r.symbol, count: Number(r.count), first: r.first, last: r.last }))
   }
 
   heartbeat(mode: string, at: Date, lastError: string | null = null) {

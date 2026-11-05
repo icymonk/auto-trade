@@ -27,3 +27,14 @@ export function pnlClass(value: string | number | null | undefined) {
   const n = Number(value ?? 0)
   return n > 0 ? 'text-red-600' : n < 0 ? 'text-blue-600' : ''
 }
+
+/** YYYYMMDD -> YYYY-MM-DD */
+export function formatYmd(v: string | null | undefined) {
+  return v ? `${v.slice(0, 4)}-${v.slice(4, 6)}-${v.slice(6, 8)}` : '-'
+}
+
+export function formatPct(v: string | number | null | undefined) {
+  if (v === null || v === undefined) return '-'
+  const n = Number(v)
+  return `${n > 0 ? '+' : ''}${n.toFixed(2)}%`
+}

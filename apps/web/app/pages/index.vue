@@ -51,6 +51,9 @@ async function setKillSwitch(on: boolean) {
         <Badge :variant="botAlive ? 'default' : 'destructive'" data-testid="bot-status">
           {{ botAlive ? '봇 실행 중' : '봇 응답 없음' }}
         </Badge>
+        <NuxtLink to="/backtests" class="text-sm text-muted-foreground underline-offset-4 hover:underline">
+          백테스트
+        </NuxtLink>
       </div>
       <label class="flex items-center gap-3 text-sm font-medium">
         <span :class="summary?.killSwitch ? 'text-destructive' : ''">
@@ -142,6 +145,49 @@ async function setKillSwitch(on: boolean) {
             <tr v-if="!summary?.positions.length">
               <td colspan="5" class="py-6 text-center text-muted-foreground">
                 보유 포지션이 없어요
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </CardContent>
+    </Card>
+
+    <Card v-if="summary?.minuteBars?.length">
+      <CardHeader>
+        <CardTitle>저장된 분봉</CardTitle>
+        <CardDescription>실시간 체결로 만든 1분봉이에요. 나중에 분 단위 백테스트에 써요.</CardDescription>
+      </CardHeader>
+      <CardContent class="overflow-x-auto">
+        <table class="w-full text-sm" data-testid="minute-bars">
+          <thead class="text-left text-muted-foreground">
+            <tr class="border-b">
+              <th class="py-2">
+                종목
+              </th>
+              <th class="text-right">
+                분봉 수
+              </th>
+              <th class="text-right">
+                처음
+              </th>
+              <th class="text-right">
+                마지막
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="m in summary.minuteBars" :key="m.symbol" class="border-b last:border-0">
+              <td class="py-2 font-medium">
+                {{ m.symbol }}
+              </td>
+              <td class="text-right">
+                {{ formatNumber(m.count) }}
+              </td>
+              <td class="text-right">
+                {{ formatTime(m.first) }}
+              </td>
+              <td class="text-right">
+                {{ formatTime(m.last) }}
               </td>
             </tr>
           </tbody>

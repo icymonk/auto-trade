@@ -10,6 +10,10 @@ export type BrokerName = 'meritz' | 'toss'
 export interface Settings {
   broker: BrokerName
   meritzFeed: 'ws' | 'rest'
+  recordMinuteBars: boolean
+  backtestDbPath: string
+  feeRate: Decimal
+  krSellTaxRate: Decimal
   dryRun: boolean
   symbols: string[]
   pollSeconds: number
@@ -32,6 +36,10 @@ export function settingsFromEnv(): Settings {
   return {
     broker,
     meritzFeed,
+    recordMinuteBars: !['false', '0', 'no'].includes(env('RECORD_MINUTE_BARS', 'true').toLowerCase()),
+    backtestDbPath: env('BACKTEST_DB_PATH', 'data/backtest.sqlite3'),
+    feeRate: new Decimal(env('FEE_RATE', '0.00015')),
+    krSellTaxRate: new Decimal(env('KR_SELL_TAX_RATE', '0.002')),
     dryRun: !['false', '0', 'no'].includes(env('DRY_RUN', 'true').toLowerCase()),
     symbols: env('SYMBOLS', '005930').split(',').map(s => s.trim()).filter(Boolean),
     pollSeconds: Number(env('POLL_SECONDS', '10')),
