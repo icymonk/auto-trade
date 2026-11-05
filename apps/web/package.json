@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@lucide/vue": "^1.52.0",
-    "@toss-autotrade/core": "workspace:*",
+    "@auto-trade/core": "workspace:*",
     "@vueuse/core": "^15.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

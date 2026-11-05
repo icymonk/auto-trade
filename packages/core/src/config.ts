@@ -5,7 +5,10 @@ function env(name: string, fallback: string): string {
   return v ? v : fallback
 }
 
+export type BrokerName = 'meritz' | 'toss'
+
 export interface Settings {
+  broker: BrokerName
   dryRun: boolean
   symbols: string[]
   pollSeconds: number
@@ -21,7 +24,10 @@ export interface Settings {
 }
 
 export function settingsFromEnv(): Settings {
+  const broker = env('BROKER', 'meritz').toLowerCase()
+  if (broker !== 'meritz' && broker !== 'toss') throw new Error(`BROKER must be meritz or toss: ${broker}`)
   return {
+    broker,
     dryRun: !['false', '0', 'no'].includes(env('DRY_RUN', 'true').toLowerCase()),
     symbols: env('SYMBOLS', '005930').split(',').map(s => s.trim()).filter(Boolean),
     pollSeconds: Number(env('POLL_SECONDS', '10')),

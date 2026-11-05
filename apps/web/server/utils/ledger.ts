@@ -1,5 +1,5 @@
 import { resolve } from 'node:path'
-import { KillSwitch, Ledger } from '@toss-autotrade/core'
+import { KillSwitch, Ledger } from '@auto-trade/core'
 import { useRuntimeConfig } from 'nitro/runtime-config'
 
 let ledger: Ledger | undefined

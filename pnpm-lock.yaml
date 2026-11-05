@@ -23,18 +23,18 @@ importers:
 
   apps/bot:
     dependencies:
-      '@toss-autotrade/core':
+      '@auto-trade/core':
         specifier: workspace:*
         version: link:../../packages/core
 
   apps/web:
     dependencies:
+      '@auto-trade/core':
+        specifier: workspace:*
+        version: link:../../packages/core
       '@lucide/vue':
         specifier: ^1.52.0
         version: 1.69.0(vue@3.5.44(typescript@6.0.3))
-      '@toss-autotrade/core':
-        specifier: workspace:*
-        version: link:../../packages/core
       '@vueuse/core':
         specifier: ^15.0.0
         version: 15.0.0(vue@3.5.44(typescript@6.0.3))

@@ -6,7 +6,7 @@ export default defineNuxtConfig({
   app: {
     head: {
       htmlAttrs: { lang: 'ko' },
-      title: 'toss-autotrade',
+      title: 'auto-trade',
     },
   },
   modules: ['shadcn-nuxt'],
