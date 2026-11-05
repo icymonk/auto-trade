@@ -1,0 +1,10 @@
+{
+  "name": "@toss-autotrade/core",
+  "private": true,
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": { "typecheck": "tsc -p ." },
+  "dependencies": {
+    "decimal.js": "^10.6.0"
+  }
+}

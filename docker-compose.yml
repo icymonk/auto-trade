@@ -4,6 +4,32 @@ services:
     image: toss-autotrade:latest
     env_file: .env
     environment:
-      TZ: Asia/Seoul
+      DB_PATH: /app/data/bot.sqlite3
+      KILL_SWITCH_PATH: /app/data/KILL
+    volumes:
+      - ./data:/app/data
     # A single instance only: issuing a new token revokes the previous one.
-    restart: "no"
+    restart: unless-stopped
+
+  web:
+    image: toss-autotrade:latest
+    command: ["node", "apps/web/.output/server/index.mjs"]
+    environment:
+      NUXT_DB_PATH: /app/data/bot.sqlite3
+      NUXT_KILL_SWITCH_PATH: /app/data/KILL
+      NUXT_DASHBOARD_PASSWORD: ${DASHBOARD_PASSWORD:-}
+      PORT: 3000
+    volumes:
+      - ./data:/app/data
+    ports:
+      - "${DASHBOARD_BIND:-127.0.0.1}:3000:3000"
+    depends_on:
+      - bot
+    restart: unless-stopped
+
+  # One-off read-only API check: docker compose run --rm check
+  check:
+    image: toss-autotrade:latest
+    command: ["node_modules/.bin/tsx", "apps/bot/src/check-connection.ts"]
+    env_file: .env
+    profiles: [tools]
