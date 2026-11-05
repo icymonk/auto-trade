@@ -9,6 +9,7 @@ export type BrokerName = 'meritz' | 'toss'
 
 export interface Settings {
   broker: BrokerName
+  meritzFeed: 'ws' | 'rest'
   dryRun: boolean
   symbols: string[]
   pollSeconds: number
@@ -26,8 +27,11 @@ export interface Settings {
 export function settingsFromEnv(): Settings {
   const broker = env('BROKER', 'meritz').toLowerCase()
   if (broker !== 'meritz' && broker !== 'toss') throw new Error(`BROKER must be meritz or toss: ${broker}`)
+  const meritzFeed = env('MERITZ_FEED', 'ws').toLowerCase()
+  if (meritzFeed !== 'ws' && meritzFeed !== 'rest') throw new Error(`MERITZ_FEED must be ws or rest: ${meritzFeed}`)
   return {
     broker,
+    meritzFeed,
     dryRun: !['false', '0', 'no'].includes(env('DRY_RUN', 'true').toLowerCase()),
     symbols: env('SYMBOLS', '005930').split(',').map(s => s.trim()).filter(Boolean),
     pollSeconds: Number(env('POLL_SECONDS', '10')),

@@ -1,5 +1,5 @@
 /** Read-only connectivity check against the selected broker API (BROKER=meritz|toss). Never places orders. */
-import { MeritzClient, settingsFromEnv, TossClient } from '@auto-trade/core'
+import { MERITZ_WS_URL, MeritzClient, settingsFromEnv, subscriptionOf, TossClient } from '@auto-trade/core'
 
 async function step<T>(name: string, fn: () => Promise<T>): Promise<T | null> {
   try {
@@ -34,8 +34,28 @@ async function checkMeritz() {
   await step('환율 USD/KRW', async () => (await client.getFxPrice()).data[0]?.prpr)
   await step('국내 영업일', async () => (await client.getMarketDays()).data)
   await step('미국 장운영', async () => (await client.getOverseasMarketHours('01')).data)
+  await step('실시간 시세 구독 (WebSocket, 005930)', async () => wsSubscribe(await client.accessToken()))
   await step('보유 종목 수', async () => (await client.getHoldings()).data.length)
   await step('주문 가능 현금 (KRW)', async () => (await client.getDeposit()).data.oder_able_cash_amt)
+}
+
+/** Subscribes once and resolves on the server's ack; data ticks only arrive while the market trades. */
+function wsSubscribe(accessToken: string) {
+  return new Promise<string>((resolve, reject) => {
+    const ws = new WebSocket(process.env.MERITZ_WS_URL ?? MERITZ_WS_URL)
+    const timer = setTimeout(() => { ws.close(); reject(new Error('no ack within 10s')) }, 10_000)
+    ws.onopen = () => ws.send(JSON.stringify({ header: { token: `Bearer ${accessToken}`, tr_type: '1' }, body: subscriptionOf('005930') }))
+    ws.onerror = () => { clearTimeout(timer); reject(new Error('websocket error')) }
+    ws.onmessage = (ev) => {
+      const msg = JSON.parse(String(ev.data))
+      const code = msg?.header?.rsp_cd ?? msg?.rsp_cd
+      if (code === undefined) return
+      clearTimeout(timer)
+      ws.close()
+      if (code === '00000') resolve(`${code} ${msg.header?.rsp_msg ?? ''}`)
+      else reject(new Error(`${code} ${msg?.header?.rsp_msg ?? msg?.rsp_msg ?? ''}`))
+    }
+  })
 }
 
 async function checkToss() {
