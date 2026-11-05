@@ -1,18 +1,18 @@
 services:
   bot:
     build: .
-    image: toss-autotrade:latest
+    image: auto-trade:latest
     env_file: .env
     environment:
       DB_PATH: /app/data/bot.sqlite3
       KILL_SWITCH_PATH: /app/data/KILL
     volumes:
       - ./data:/app/data
-    # A single instance only: issuing a new token revokes the previous one.
+    # A single instance only (Toss revokes the previous token on reissue).
     restart: unless-stopped
 
   web:
-    image: toss-autotrade:latest
+    image: auto-trade:latest
     command: ["node", "apps/web/.output/server/index.mjs"]
     environment:
       NUXT_DB_PATH: /app/data/bot.sqlite3
@@ -29,7 +29,7 @@ services:
 
   # One-off read-only API check: docker compose run --rm check
   check:
-    image: toss-autotrade:latest
+    image: auto-trade:latest
     command: ["node_modules/.bin/tsx", "apps/bot/src/check-connection.ts"]
     env_file: .env
     profiles: [tools]

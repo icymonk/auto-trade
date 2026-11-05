@@ -13,5 +13,5 @@ export default defineHandler((event) => {
   const a = Buffer.from(given)
   const b = Buffer.from(password)
   if (a.length === b.length && timingSafeEqual(a, b)) return
-  throw new HTTPError({ status: 401, message: 'Unauthorized', headers: { 'WWW-Authenticate': 'Basic realm="toss-autotrade"' } })
+  throw new HTTPError({ status: 401, message: 'Unauthorized', headers: { 'WWW-Authenticate': 'Basic realm="auto-trade"' } })
 })

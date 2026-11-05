@@ -1,5 +1,5 @@
 {
-  "name": "@toss-autotrade/core",
+  "name": "@auto-trade/core",
   "private": true,
   "type": "module",
   "exports": { ".": "./src/index.ts" },

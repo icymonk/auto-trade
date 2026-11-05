@@ -1,5 +1,5 @@
 {
-  "name": "toss-autotrade",
+  "name": "auto-trade",
   "private": true,
   "type": "module",
   "packageManager": "pnpm@10.34.9",

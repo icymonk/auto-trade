@@ -43,7 +43,7 @@ async function setKillSwitch(on: boolean) {
     <header class="flex flex-wrap items-center justify-between gap-4">
       <div class="flex items-center gap-3">
         <h1 class="text-2xl font-semibold">
-          toss-autotrade
+          auto-trade
         </h1>
         <Badge v-if="summary?.status" variant="outline">
           {{ summary.status.mode }}

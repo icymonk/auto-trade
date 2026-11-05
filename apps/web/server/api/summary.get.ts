@@ -1,4 +1,4 @@
-import { Decimal, kstDate } from '@toss-autotrade/core'
+import { Decimal, kstDate } from '@auto-trade/core'
 import { defineHandler } from 'nitro/h3'
 import { useKillSwitch, useLedger } from '../utils/ledger'
 

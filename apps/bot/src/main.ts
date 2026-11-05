@@ -1,4 +1,4 @@
-/** Dry-run trading bot: orders are recorded in SQLite, never sent to Toss. */
+/** Dry-run trading bot: orders are recorded in SQLite, never sent to the broker. */
 import { parseArgs } from 'node:util'
 import {
   AlwaysOpen,
@@ -7,12 +7,15 @@ import {
   DryRunBroker,
   Ledger,
   MarketClock,
+  MeritzClient,
+  MeritzFeed,
+  MeritzMarketClock,
   RiskManager,
   SimulatedFeed,
   settingsFromEnv,
   TossClient,
   TossFeed,
-} from '@toss-autotrade/core'
+} from '@auto-trade/core'
 
 const { values: args } = parseArgs({
   options: {
@@ -33,6 +36,11 @@ let feed, clock
 if (args.simulate) {
   feed = new SimulatedFeed()
   clock = new AlwaysOpen()
+}
+else if (settings.broker === 'meritz') {
+  const client = new MeritzClient()
+  feed = new MeritzFeed(client)
+  clock = args['ignore-market-hours'] ? new AlwaysOpen() : new MeritzMarketClock(client)
 }
 else {
   const client = new TossClient()
@@ -55,7 +63,7 @@ const bot = new Bot({
 for (const sig of ['SIGINT', 'SIGTERM'] as const) process.on(sig, () => bot.stop())
 
 console.log(
-  `starting dry-run bot: symbols=${settings.symbols.join(',')} strategy=${settings.strategy} `
+  `starting dry-run bot: broker=${settings.broker} symbols=${settings.symbols.join(',')} strategy=${settings.strategy} `
   + `simulate=${args.simulate} db=${settings.dbPath} kill_switch=${settings.killSwitchPath}`,
 )
 await bot.run(

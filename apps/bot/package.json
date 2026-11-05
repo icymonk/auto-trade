@@ -6,6 +6,6 @@
     "typecheck": "tsc -p ."
   },
   "dependencies": {
-    "@toss-autotrade/core": "workspace:*"
+    "@auto-trade/core": "workspace:*"
   }
 }
