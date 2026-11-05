@@ -27,6 +27,8 @@
 
 종목은 국내 `005930`, 미국 `AAPL.OQ` 처럼 거래소 코드를 붙입니다 (OQ 나스닥, NY 뉴욕, AX 아멕스).
 
+시세는 기본으로 WebSocket 실시간 체결가를 씁니다(`MERITZ_FEED=ws`). 최근 60초 동안 체결이 없거나 연결이 끊긴 종목은 REST 현재가로 대신 조회하고, 끊기면 자동으로 다시 연결합니다. `MERITZ_FEED=rest` 면 REST 만 씁니다.
+
 **토스증권 (`BROKER=toss`)**
 
 1. 토스증권 WTS > 설정 > Open API 에서 `client_id` / `client_secret` 발급 → `TOSS_CLIENT_ID` / `TOSS_CLIENT_SECRET`

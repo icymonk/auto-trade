@@ -93,7 +93,8 @@ export class MeritzClient {
     return this.token
   }
 
-  private async accessToken() {
+  /** Current access token (issued or refreshed as needed); the WebSocket subscription also needs it. */
+  async accessToken() {
     if (!this.token || Date.now() >= this.token.expiresAt - 60_000) await this.issueToken()
     return this.token!.accessToken
   }

@@ -10,6 +10,7 @@ import {
   MeritzClient,
   MeritzFeed,
   MeritzMarketClock,
+  MeritzStreamFeed,
   RiskManager,
   SimulatedFeed,
   settingsFromEnv,
@@ -33,13 +34,21 @@ if (!settings.dryRun) {
 }
 
 let feed, clock
+let stream: MeritzStreamFeed | undefined
 if (args.simulate) {
   feed = new SimulatedFeed()
   clock = new AlwaysOpen()
 }
 else if (settings.broker === 'meritz') {
   const client = new MeritzClient()
-  feed = new MeritzFeed(client)
+  if (settings.meritzFeed === 'ws') {
+    stream = new MeritzStreamFeed(client)
+    stream.start(settings.symbols)
+    feed = stream
+  }
+  else {
+    feed = new MeritzFeed(client)
+  }
   clock = args['ignore-market-hours'] ? new AlwaysOpen() : new MeritzMarketClock(client)
 }
 else {
@@ -63,11 +72,12 @@ const bot = new Bot({
 for (const sig of ['SIGINT', 'SIGTERM'] as const) process.on(sig, () => bot.stop())
 
 console.log(
-  `starting dry-run bot: broker=${settings.broker} symbols=${settings.symbols.join(',')} strategy=${settings.strategy} `
+  `starting dry-run bot: broker=${settings.broker}${settings.broker === 'meritz' && !args.simulate ? `/${settings.meritzFeed}` : ''} symbols=${settings.symbols.join(',')} strategy=${settings.strategy} `
   + `simulate=${args.simulate} db=${settings.dbPath} kill_switch=${settings.killSwitchPath}`,
 )
 await bot.run(
   args['poll-seconds'] !== undefined ? Number(args['poll-seconds']) : settings.pollSeconds,
   args.steps !== undefined ? Number(args.steps) : undefined,
 )
+stream?.close()
 ledger.close()
